@@ -24,6 +24,7 @@ class SentenceEmbedding():
 
         # 停用词文件路径
         self.stopword_file = os.path.join(os.path.abspath(os.path.dirname(__file__)), "data/all_stopword.txt")
+        print("stopword_file=%s" % self.stopword_file)
 
         # 停用词集合
         self.stopword_list = []
@@ -36,9 +37,11 @@ class SentenceEmbedding():
 
         # 意图文件路径
         self.intention_file = os.path.join(os.path.abspath(os.path.dirname(__file__)), "data/intention.txt")
+        print("intention_file=%s" % self.intention_file)
 
         # 标题文件路径
         self.title_file = os.path.join(os.path.abspath(os.path.dirname(__file__)), "data/title.txt")
+        print("title_file=%s" % self.title_file)
 
         # 词汇在样本语料中的频率(词汇出现次数/总词汇次数)
         self.word_proba_dict = {}
@@ -58,7 +61,7 @@ class SentenceEmbedding():
 
     # 加载所有的停用词 到 类变量中
     def load_stopword(self):
-        print("stopword_file=%s" % self.stopword_file)
+
         for line in open(self.stopword_file):
             self.stopword_list.append(line.strip())
 
@@ -145,8 +148,8 @@ class SentenceEmbedding():
         word_num_dict = {}
         sum_num = 0
 
-        print("intention_file=%s" % self.intention_file)
-        for line in open(self.intention_file):
+        #for line in open(self.intention_file):
+        for line in open(self.title_file):
             content_str = line.strip()
 
             rst = jieba_fast.cut(content_str)
@@ -192,7 +195,7 @@ if __name__ == '__main__':
 
     sentence_embedding_class = SentenceEmbedding()
 
-    print(sentence_embedding_class.word_proba_dict)
+    # print(sentence_embedding_class.word_proba_dict)
     # print("----------------get_coe--------------------")
     sentence_embedding_class.get_coe()
 
