@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import os
 import numpy as np
 import jieba_fast
 from gensim.models import Word2Vec
@@ -12,17 +13,17 @@ from sklearn.decomposition import TruncatedSVD
 # 计算sentence的embedding，不再使用沙雕的相加的方式，而是带有权重的加法，使用怎么样的权重，请参考论文
 
 
-#########################################################################
-## 宏定义
-class DEFINE:
-    #UPDTIMEFILE = os.path.join(os.path.abspath(os.path.dirname(__file__)),"UPDTIME")
-    Para_A_float = 1.0      #参数a的值  人工设定的
-
-
+##################################处理句子嵌入的类#######################################
 class SentenceEmbedding():
     def __init__(self):
 
         print("SentenceEmbedding __init__")
+
+        # 参数a的值  人工设定的
+        self.para_A_float = 1.0
+
+        # 停用词文件路径
+        self.stopword_file = os.path.join(os.path.abspath(os.path.dirname(__file__)), "data/all_stopword.txt")
 
         # 停用词集合
         self.stopword_list = []
@@ -33,6 +34,12 @@ class SentenceEmbedding():
         # word2vec模型
         self.model = Word2Vec.load("word2vec/word2vec_wx")
 
+        # 意图文件路径
+        self.intention_file = os.path.join(os.path.abspath(os.path.dirname(__file__)), "data/intention.txt")
+
+        # 标题文件路径
+        self.title_file = os.path.join(os.path.abspath(os.path.dirname(__file__)), "data/title.txt")
+
         # 词汇在样本语料中的频率(词汇出现次数/总词汇次数)
         self.word_proba_dict = {}
 
@@ -42,8 +49,8 @@ class SentenceEmbedding():
         # 所有句子的向量集合 Vs
         self.all_sentence_embedding = np.empty([0, self.model.vector_size], dtype=np.float)
 
-        # 向量需要乘以的系数
-        self.coe = 0
+        # 投影的矩阵
+        self.uuT = np.empty([0, 1], dtype=np.float)
 
         # 计算所有文本的所有单词出现的概率
         self.statistics_word_proba()
@@ -51,8 +58,8 @@ class SentenceEmbedding():
 
     # 加载所有的停用词 到 类变量中
     def load_stopword(self):
-
-        for line in open("./all_stopword.txt"):
+        print("stopword_file=%s" % self.stopword_file)
+        for line in open(self.stopword_file):
             self.stopword_list.append(line.strip())
 
 
@@ -84,7 +91,7 @@ class SentenceEmbedding():
             proba_word = self.word_proba_dict[word]
 
             # 系数
-            coe = DEFINE.Para_A_float/(DEFINE.Para_A_float + proba_word)
+            coe = self.para_A_float/(self.para_A_float + proba_word)
 
             # word2vec某词
             w2v_vector = self.get_word2vec(word)
@@ -122,26 +129,12 @@ class SentenceEmbedding():
 
         # SVD or PCA
         uT_svd = TruncatedSVD(n_components=1).fit_transform(all_sentence_embedding)
-        #U_svd = TruncatedSVD(n_components=1)
-        #U_svd.fix(all_sentence_embedding)
 
-        # print("U_svd begin")
-        # print(uT_svd)
-        # print(np.shape(uT_svd.T.dot(uT_svd)))
-        # print(uT_svd.T.dot(uT_svd))
+        uuT = uT_svd.dot(uT_svd.T) / np.linalg.norm(uT_svd)
 
-        uuT = uT_svd.T.dot(uT_svd) / np.linalg.norm(uT_svd)
-        #print(uuT)
+        self.all_sentence_embedding = self.all_sentence_embedding - uuT.dot(self.all_sentence_embedding)
 
-        # 系数
-        coe = 1.0 - uuT
-
-        self.all_sentence_embedding = coe * self.all_sentence_embedding
-
-        self.coe = coe
-
-        #print(self.all_sentence_embedding)
-        #print(np.shape(self.all_sentence_embedding))
+        self.uuT = uuT
 
 
 
@@ -152,8 +145,8 @@ class SentenceEmbedding():
         word_num_dict = {}
         sum_num = 0
 
-        #for line in open("./intention.txt"):
-        for line in open("./title.txt"):
+        print("intention_file=%s" % self.intention_file)
+        for line in open(self.intention_file):
             content_str = line.strip()
 
             rst = jieba_fast.cut(content_str)
@@ -204,7 +197,8 @@ if __name__ == '__main__':
     sentence_embedding_class.get_coe()
 
     #####################################################################################
-    content_str = "四幅图显示：黄金正在触底 重大行情一触即发"
+    #content_str = "四幅图显示：黄金正在触底 重大行情一触即发"
+    content_str = "股票名称智能诊股"
 
     rst = jieba_fast.cut(content_str)
 
@@ -221,7 +215,10 @@ if __name__ == '__main__':
 
     sentence_embedding = sentence_embedding_class.get_first_sentence_embedding(word_list)
 
-    input_sentence_embedding = sentence_embedding_class.coe * sentence_embedding
+    #input_sentence_embedding = sentence_embedding - sentence_embedding_class.uuT.dot(sentence_embedding)
+
+    input_sentence_embedding = sentence_embedding_class.all_sentence_embedding[0]
+
     #####################################################################################
 
     # print("-------------------------print--------------------------")
