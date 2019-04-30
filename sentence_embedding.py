@@ -148,8 +148,8 @@ class SentenceEmbedding():
         word_num_dict = {}
         sum_num = 0
 
-        #for line in open(self.intention_file):
-        for line in open(self.title_file):
+        for line in open(self.intention_file):
+        #for line in open(self.title_file):
             content_str = line.strip()
 
             rst = jieba_fast.cut(content_str)
@@ -184,6 +184,12 @@ class SentenceEmbedding():
 def get_conine_value(X, Y):
     # 分子 x1*y1 + x2*y2 + ... + xn*yn
     # 分母 ||X|| * ||Y||
+
+	if (np.linalg.norm(X) <= 0.0 or np.linalg.norm(Y) <= 0.0):
+        return 0
+
+    X = X.reshape(1, 256)
+    Y = Y.reshape(1, 256)
 
     return float(X.dot(Y.T) / (np.linalg.norm(X) * np.linalg.norm(Y)))
 
