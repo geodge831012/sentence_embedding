@@ -181,7 +181,7 @@ class SentenceEmbedding():
 
 #########################################################################
 ## 求X Y两个向量的cosine值
-def get_conine_value(X, Y):
+def get_cosine_value(X, Y):
     # 分子 x1*y1 + x2*y2 + ... + xn*yn
     # 分母 ||X|| * ||Y||
 
@@ -241,7 +241,7 @@ if __name__ == '__main__':
     for i in range(len(sentence_embedding_class.all_sentence_embedding)):
         sample_sentenc_embedding = sentence_embedding_class.all_sentence_embedding[i]
 
-        conine_rst_float = get_conine_value(input_sentence_embedding, sample_sentenc_embedding)
+        conine_rst_float = get_cosine_value(input_sentence_embedding, sample_sentenc_embedding)
 
         rst_list.append((i+1, conine_rst_float))
 
